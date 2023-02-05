@@ -1,0 +1,12 @@
+__pycache__
+
+.ipynb_checkpoints
+
+venv
+
+configuration.json
+
+Easee.ipynb
+Eloverblik.ipynb
+
+output.csv

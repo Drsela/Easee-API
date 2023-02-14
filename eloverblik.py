@@ -27,6 +27,10 @@ def getData(token, startDate, endDate):
         'Authorization': 'Bearer ' + data_access_token,
     }
     meters = requests.get(metering_points_url, headers=headers)
+    if(meters.ok == False): 
+        print('Eloverblik is currently having issues: ' + meters.reason)
+        return None
+
     first_meter = meters.json()['result'][0]['meteringPointId']
 
     meter_json = {

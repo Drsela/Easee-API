@@ -8,10 +8,24 @@ from datetime import timedelta
 
 pd.set_option('mode.chained_assignment', None)
 
+defaultYear = dt.today().year
+print('Due to limitations in the Easee API, the period must be scoped to a single month.')
+year = input('Enter a year (it will defualt to ' + str(defaultYear) +'): ')
+startMonth = int(input('Enter a month (1-12): '))
+
+year = int(year) if year else defaultYear
+
+if(int(year) == dt.today().year and startMonth > dt.today().month):
+    print("The input date cannot be bigger than the current month and year")
+    exit()
+
 # %%
 # Basic setup - Set the period
-startDate = dt.today().date().replace(day=1).replace(month=1)
-endDate = dt.today().date()
+startDate = dt.today().date().replace(day=1,month=startMonth,year=year)
+if(startDate.month == 12):
+    endDate = dt.today().date().replace(year=startDate.year+1, month=1, day=1)
+else:
+    endDate = dt.today().date().replace(month=startDate.month+1, day=1)
 
 def getDateAsString(date):
     return date.strftime("%Y/%m/%d %H:%M:%S").replace('/','-')
@@ -22,9 +36,10 @@ with open("configuration.json") as file:
     config = json.load(file)
 url = "https://api.easee.cloud/api/accounts/login"
 
-payload = {"userName": config['Easee']['Username'], 
-           "password": config['Easee']['Password']
-        }
+payload = {
+        "userName": config['Easee']['Username'], 
+        "password": config['Easee']['Password']
+}
 
 headers = {
     "accept": "application/json",
@@ -43,6 +58,10 @@ headers = {
 }
 
 response = requests.get(url, headers=headers)
+if(not response.ok):
+    print('Easee API could not be called: ' + response.reason)
+    exit()
+
 resJson = json.loads(response.text)
 resWithMeasurements = [x for x in resJson if x['consumption'] > 0]
 
@@ -65,11 +84,17 @@ dates = dates.tolist()
 kWhMeasurements = [item['consumption'] for item in resWithMeasurements]
 
 df = pd.DataFrame({"Dato": pd.to_datetime(dates,utc=True), "KwH": kWhMeasurements})
+if(df.empty):
+    print('No data could be found from the Easee API')
+    exit()
+
 
 # %%
 # Get Tariff data
 import eloverblik
 dfTotal = eloverblik.getData(config['Eloverblik']['Token'], startDate, endDate)
+if(dfTotal is None):
+    exit()
 
 # %%
 
@@ -92,14 +117,8 @@ mergeRelData.to_csv('output.csv', index=False)
 # Display price usage pr. day in the given month
 
 print('_________________________________________________________________')
-print('Periode: ' + startDate.strftime('%m/%d/%Y') + ' - ' + endDate.strftime('%m/%d/%Y'))
+print('Period: ' + startDate.strftime('%d/%m/%Y') + ' - ' + endDate.strftime('%d/%m/%Y'))
 print('Total pris (DKK): ' + str(sum(mergeRelData['Charge_Price'])))
 print('Total kWh: ' + str(sum(mergeRelData['KwH'])))
 print('Avg DKK/kWh: ' + str(sum( mergeRelData['Charge_Price']/sum(mergeRelData['KwH']))))
 print('_________________________________________________________________')
-
-
-# %%
-df_resampled = mergeRelData.set_index('short_date').resample('M').sum(numeric_only=True).drop(columns=['Spot_Price', 'Tariff', 'Total_Price'])
-df_resampled['month'] = df_resampled.index.month_name()
-print(df_resampled)

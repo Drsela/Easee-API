@@ -9,5 +9,5 @@ configuration.json
 Easee.ipynb
 Eloverblik.ipynb
 
-output.csv
+*.csv
 .DS_Store

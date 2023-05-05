@@ -104,7 +104,7 @@ if (dfTotal is None):
 # %%
 
 # Merge data based upon the timestamp
-merge = pd.merge(df, dfTotal, how='outer', left_on='Dato', right_on='HourDK')
+merge = pd.merge(df, dfTotal, how='outer', left_on='Dato', right_on='HourUTC')
 
 # Only take data where there's a measurement
 mergeRelData = merge[merge['kWh'] > 0]
@@ -113,7 +113,7 @@ mergeRelData = merge[merge['kWh'] > 0]
 # Setup variables
 mergeRelData['Charge_Price'] = np.round(
     mergeRelData['kWh'] * mergeRelData['Total_Price'], 2)
-mergeRelData = mergeRelData.drop(columns=['HourDK'])
+mergeRelData = mergeRelData.drop(columns=['HourUTC'])
 mergeRelData['short_date'] = mergeRelData['Dato'].dt.date
 mergeRelData['short_date'] = mergeRelData['short_date'].astype('datetime64')
 

@@ -59,14 +59,14 @@ def getData(token, startDate, endDate):
 
     filter = '{"PriceArea":["DK1"]}'
     sort = "HourUTC ASC"
-    url = f"https://api.energidataservice.dk/dataset/Elspotprices?offset=0&start={startDate.strftime('%Y/%m/%dT%H:%M').replace('/','-')}&end={endDate.strftime('%Y/%m/%dT%H:%M').replace('/','-')}&filter={filter}&sort={sort}&timezone=dk"
+    url = f"https://api.energidataservice.dk/dataset/Elspotprices?offset=0&start={startDate.strftime('%Y/%m/%dT%H:%M').replace('/','-')}&end={endDate.strftime('%Y/%m/%dT%H:%M').replace('/','-')}&filter={filter}&sort={sort}&timezone=UTC"
     spot_price_res = requests.get(url)
 
     data = json.loads(spot_price_res.text)
-    dfSpot = pd.DataFrame({'HourDK': [item['HourDK'] for item in data['records']], 'Spot_Price':  [
+    dfSpot = pd.DataFrame({'HourUTC': [item['HourUTC'] for item in data['records']], 'Spot_Price':  [
                         item['SpotPriceDKK'] for item in data['records']]})
 
-    for row in dfSpot['HourDK']:
+    for row in dfSpot['HourUTC']:
         pos_number = row.split('T')[1].split(':')[0]
         #print(pos_number)
         if (pos_number.startswith('0')):
@@ -75,7 +75,7 @@ def getData(token, startDate, endDate):
         time_stamp = row.split('T')[1]
 
         # print(time_stamp)
-        dfSpot.loc[dfSpot['HourDK'].str.endswith(time_stamp), 'Tariff'] = df.query(
+        dfSpot.loc[dfSpot['HourUTC'].str.endswith(time_stamp), 'Tariff'] = df.query(
             f'Position=="{str(int(pos_number)+1)}"')['Price'].item()
 
     #print(df.query('Position=="18"')['Price'].item())
@@ -84,6 +84,6 @@ def getData(token, startDate, endDate):
     systemtarif = 0.068
     elafgift = 0.010
     dfSpot['Total_Price'] = np.round((dfSpot['Spot_Price'] + (dfSpot['Tariff']) + (transmissionnettarif + systemtarif + elafgift)) * 1.25,2)
-    dfSpot['HourDK'] = pd.to_datetime(dfSpot['HourDK'], utc=True)
+    dfSpot['HourUTC'] = pd.to_datetime(dfSpot['HourUTC'], utc=True)
     return dfSpot
 

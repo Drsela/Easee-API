@@ -49,6 +49,18 @@ def getData(token, startDate, endDate):
 
 
     # Tariff
+    transmissionnettarif = 0
+    systemtarif = 0
+    elafgift = 0
+    # Fixed costs
+    for tariff in data['result'][0]['result']['tariffs']:
+        if tariff['name'] == "Transmissions nettarif":
+            transmissionnettarif = tariff['prices'][0]["price"]
+        if tariff['name'] == "Systemtarif":
+            systemtarif = tariff['prices'][0]["price"]
+        if tariff['name'] == "Elafgift":
+            elafgift=tariff['prices'][0]["price"]
+    
     positions = [tariff['position'] for tariff in [item['prices']
                             for item in data['result'][0]['result']['tariffs']][0]]
 
@@ -80,9 +92,6 @@ def getData(token, startDate, endDate):
 
     #print(df.query('Position=="18"')['Price'].item())
     dfSpot['Spot_Price'] = np.round((dfSpot['Spot_Price'] / 1000),2)
-    transmissionnettarif = 0.073
-    systemtarif = 0.068
-    elafgift = 0.010
     dfSpot['Total_Price'] = np.round((dfSpot['Spot_Price'] + (dfSpot['Tariff']) + (transmissionnettarif + systemtarif + elafgift)) * 1.25,2)
     dfSpot['HourUTC'] = pd.to_datetime(dfSpot['HourUTC'], utc=True)
     return dfSpot

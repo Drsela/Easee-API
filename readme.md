@@ -18,7 +18,7 @@ The files content should look like this:
 {
     "Easee": {
         "Username": "EASEE_HOME_USERNAME",
-        "Password": "EASEE_HOME_PASSWORD"
+        "Password": "EASEE_HOME_PASSWORD",
         "ChargerName":"EASEE_HOME_CHARGER_NAME"
 
     },
